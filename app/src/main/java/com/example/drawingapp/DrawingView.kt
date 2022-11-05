@@ -38,6 +38,9 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
         brushSize = 20.toFloat()
     }
 
+    /// This is called during layout when the size of this view has changed.
+    /// mainly, it is called at the start when the view is set up
+    /// so, here we set our canvas
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
 
@@ -48,6 +51,8 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
         canvas = Canvas(canvasBitmap!!)
     }
 
+    /// called when the view should render its content
+    /// it is called after we call invalidate(), which we call from onTouchEvent(), hence our drawPath gets painted
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
@@ -55,6 +60,7 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
         canvas?.let {
             println("on draw no null")
 
+            /// even if we comment this drawBitmap code, nothing changes
             canvas!!.drawBitmap(canvasBitmap!!, 0f, 0f, canvasPaint)
 
             if(drawPath != null && drawPaint != null) {
@@ -68,31 +74,40 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
         }
     }
 
+    /// to handle touch screen motion events, when ever user draws something on the screen, this method gets called
+    /// we mainly store the users actions in our drawPath variable and later user it to paint on the screen
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         val touchX = event?.x
         val touchY = event?.y
 
         when(event?.action){
+            /// when a user touches the screen , MotionEvent.ACTION_DOWN is called
+            /// in this method we move our path to the x and y coordinate where the touch has happened
             MotionEvent.ACTION_DOWN -> { /// these are called lambda expressions
                 /// might not be needed to set everytime
                 drawPath!!.color = color
                 drawPath!!.brushThickness = brushSize
 
+                /// comment this to not clear the previous drawing
                 drawPath!!.reset()
                 if(touchX != null && touchY != null) {
                     drawPath!!.moveTo(touchX!!, touchY!!)
                 }
             }
 
+            /// when a user moved through the screen , MotionEvent.ACTION_MOVE is called
+            /// in this method we create a line to our new x and y coordinate where the touch has happened
             MotionEvent.ACTION_MOVE -> {
                 if(touchX != null && touchY != null) {
                     drawPath!!.lineTo(touchX!!, touchY!!)
                 }
             }
 
+            /// when a user lifts his finger from the screen , MotionEvent.ACTION_UP is called
             MotionEvent.ACTION_UP -> {
                 println("press up")
 
+                /// comment this to make the drawing stay, this resets the drawPath as soon as the user lifts his finger
                 drawPath = CustomPath(color, brushSize)
             }
 
@@ -100,10 +115,12 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
         }
 
         /// invalidate the view
+        /// this inturn calls the onDraw method where the actual drawing takes place
         invalidate()
 
         return true
     }
 
+    /// this is just a class that combines the color and brushThickness together to have easier/faster access
     internal inner class CustomPath(var color: Int, var brushThickness: Float): Path()
 }
