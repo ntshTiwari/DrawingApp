@@ -5,6 +5,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import kotlin.collections.ArrayList
 
 /// this is a view (UI) not an Activity
 /// this will extends the View class
@@ -18,6 +19,10 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
     private var brushSize: Float = 0.toFloat()
     private var color = Color.BLACK
     private var canvas: Canvas? = null
+
+    /// this will be used to store all paths the user makes
+    /// this will be useful to undo operations
+    private var allPaths = ArrayList<CustomPath>()
 
     init {
         setupDrawing()
@@ -58,11 +63,11 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
 
         /// to null check
         canvas?.let {
-            println("on draw no null")
-
             /// even if we comment this drawBitmap code, nothing changes
             canvas!!.drawBitmap(canvasBitmap!!, 0f, 0f, canvasPaint)
 
+            /// first we draw the motion as it happens,
+            /// if we remove this, then the path will be painted after the path is completed, seems like a lag
             if(drawPath != null && drawPaint != null) {
                 /// set drawPaint properties that we want to draw with
                 drawPaint!!.strokeWidth  = drawPath!!.brushThickness
@@ -70,6 +75,19 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
 
                 /// draw on the canvas using the drawPaint on the path (drawPath)
                 canvas!!.drawPath(drawPath!!, drawPaint!!)
+            }
+
+            /// after the MotionEvent.ACTION_UP, even the current path is removed as the drawPath is reset
+            /// the current path will also get repainted using the below for loop
+
+            /// then we redraw all other paths back
+            /// this way we can undo a path by removing it from the allPaths array
+            for(_path in allPaths){
+                drawPaint!!.strokeWidth  = _path!!.brushThickness
+                drawPaint!!.color = _path!!.color
+
+                /// draw on the canvas using the drawPaint on the path (drawPath)
+                canvas!!.drawPath(_path!!, drawPaint!!)
             }
         }
     }
@@ -105,7 +123,9 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
 
             /// when a user lifts his finger from the screen , MotionEvent.ACTION_UP is called
             MotionEvent.ACTION_UP -> {
-                println("press up")
+                /// we add the path here to allPaths,
+                /// because when the user lifts his finger up, it marks completion of a path
+                allPaths.add(drawPath!!)
 
                 /// comment this to make the drawing stay, this resets the drawPath as soon as the user lifts his finger
                 drawPath = CustomPath(color, brushSize)
@@ -121,6 +141,6 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
         return true
     }
 
-    /// this is just a class that combines the color and brushThickness together to have easier/faster access
+    /// this is a class that overrides the Path method, where we store the movement of the user's drawing
     internal inner class CustomPath(var color: Int, var brushThickness: Float): Path()
 }
