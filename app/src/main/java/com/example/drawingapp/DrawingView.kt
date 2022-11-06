@@ -68,17 +68,6 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
             /// even if we comment this drawBitmap code, nothing changes
             canvas!!.drawBitmap(canvasBitmap!!, 0f, 0f, canvasPaint)
 
-            /// first we draw the motion as it happens,
-            /// if we remove this, then the path will be painted after the path is completed, seems like a lag
-            if(drawPath != null && drawPaint != null) {
-                /// set drawPaint properties that we want to draw with
-                drawPaint!!.strokeWidth  = drawPath!!.brushThickness
-                drawPaint!!.color = drawPath!!.color
-
-                /// draw on the canvas using the drawPaint on the path (drawPath)
-                canvas!!.drawPath(drawPath!!, drawPaint!!)
-            }
-
             /// after the MotionEvent.ACTION_UP, even the current path is removed as the drawPath is reset
             /// the current path will also get repainted using the below for loop
 
@@ -90,6 +79,19 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
 
                 /// draw on the canvas using the drawPaint on the path (drawPath)
                 canvas!!.drawPath(_path!!, drawPaint!!)
+            }
+            ///// if we keep this for loop after the if statement then the new path first gets painted below all other paths
+            ///// so, we move it up
+
+            /// first we draw the motion as it happens,
+            /// if we remove this, then the path will be painted after the path is completed, seems like a lag
+            if(drawPath != null && drawPaint != null) {
+                /// set drawPaint properties that we want to draw with
+                drawPaint!!.strokeWidth  = drawPath!!.brushThickness
+                drawPaint!!.color = drawPath!!.color
+
+                /// draw on the canvas using the drawPaint on the path (drawPath)
+                canvas!!.drawPath(drawPath!!, drawPaint!!)
             }
         }
     }
@@ -153,6 +155,12 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
         )
 
         drawPath!!.brushThickness = brushSize
+    }
+
+    fun setBrushColor(newColor: String) {
+        color = Color.parseColor(newColor)
+
+        drawPaint!!.color = color
     }
 
     /// this is a class that overrides the Path method, where we store the movement of the user's drawing
