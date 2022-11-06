@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- android:dither="true" helps to make the shape compatible to different screen sizes -->
+<shape android:shape="oval" android:dither="true" xmlns:android="http://schemas.android.com/apk/res/android">
+    <size android:width="30dp"
+          android:height="30dp"/>
+    <solid android:color="#FF666666"/>
+</shape>

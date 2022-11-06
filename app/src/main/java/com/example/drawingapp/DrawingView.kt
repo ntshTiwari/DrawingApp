@@ -3,6 +3,7 @@ package com.example.drawingapp
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
 import kotlin.collections.ArrayList
@@ -40,7 +41,8 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
         drawPaint!!.strokeCap = Paint.Cap.ROUND
 
         canvasPaint = Paint(Paint.DITHER_FLAG)
-        brushSize = 20.toFloat()
+        /// no need to set the brushSize here, it will be set from the mainActivity
+//        brushSize = 20.toFloat()
     }
 
     /// This is called during layout when the size of this view has changed.
@@ -139,6 +141,18 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
         invalidate()
 
         return true
+    }
+
+    /// this function will help us set the brush size, with respect to the screen size/dimension
+    fun setBrushSize(newSize: Float) {
+        /// TypedValue.applyDimension will convert the newSize to a floating point value
+        brushSize = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            newSize,
+            resources.displayMetrics
+        )
+
+        drawPath!!.brushThickness = brushSize
     }
 
     /// this is a class that overrides the Path method, where we store the movement of the user's drawing
