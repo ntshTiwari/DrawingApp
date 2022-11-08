@@ -6,12 +6,29 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.get
 
 class MainActivity : AppCompatActivity() {
     private var drawingView: DrawingView? = null
     private var currentPaintImageButton: ImageButton? = null
+
+    /// this is a generic function to get any permission
+    /// which permission to ask for will be decided by the String passed to it, in this case is `Manifest.permission.CAMERA`
+    private val cameraResultLauncher: ActivityResultLauncher<String>
+            = registerForActivityResult(ActivityResultContracts.RequestPermission())
+    {
+        isGranted ->
+            if (isGranted) {
+                Toast.makeText(this, "Permission granted for camera.", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Permission denied for camera.", Toast.LENGTH_LONG).show()
+            }
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +43,14 @@ class MainActivity : AppCompatActivity() {
             ContextCompat.getDrawable(this, R.drawable.pallet_pressed)
         )
         drawingView!!.setBrushColor(currentPaintImageButton!!.tag.toString())
+
+        var galleryOpener = findViewById<ImageButton>(R.id.galleryOpener)
+        galleryOpener.setOnClickListener{
+            Permissions.getPermission(this, cameraResultLauncher)
+
+            /// only this much code is enough to get permissions
+//            cameraResultLauncher.launch(Manifest.permission.CAMERA)
+        }
 
         var brushSizeSelector = findViewById<ImageButton>(R.id.brushSizeSelector)
         brushSizeSelector.setOnClickListener{
