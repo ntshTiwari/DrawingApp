@@ -6,16 +6,35 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.example.drawingapp.DrawingView
-        android:id="@+id/drawingView"
+    <FrameLayout
+        android:id="@+id/topLayerFrameLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:padding="1dp"
         android:layout_margin="5dp"
-        android:background="@drawable/canvas_border_layout"
         app:layout_constraintBottom_toTopOf="@+id/colorPalletLinearLayout"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@drawable/canvas_border_layout"
+        >
+
+        <ImageView
+            android:id="@+id/bgImageView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/demo_bg_image"
+            android:scaleType="centerCrop"
+        />
+
+        <com.example.drawingapp.DrawingView
+            android:id="@+id/drawingView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:background="#80FFFFFF"/>
+
+    </FrameLayout>
 
     <LinearLayout
         android:id="@+id/colorPalletLinearLayout"
@@ -26,7 +45,7 @@
         app:layout_constraintBottom_toTopOf="@+id/brushSizeSelector"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/drawingView"
+        app:layout_constraintTop_toBottomOf="@+id/topLayerFrameLayout"
         >
 
         <ImageButton
