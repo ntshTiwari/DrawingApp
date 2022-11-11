@@ -1,10 +1,14 @@
 package com.example.drawingapp
 
+import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.View
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -23,11 +27,32 @@ class MainActivity : AppCompatActivity() {
     {
         isGranted ->
             if (isGranted) {
-                Toast.makeText(this, "Permission granted for camera.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Permission granted for Storage.", Toast.LENGTH_LONG).show()
+                openImageSelectorIntent()
             } else {
-                Toast.makeText(this, "Permission denied for camera.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Permission denied for Storage.", Toast.LENGTH_LONG).show()
             }
+    }
 
+    /// opens an activity and uses its result to set the bgImageView
+    private val openGalleryLauncher: ActivityResultLauncher<Intent>
+        = registerForActivityResult((ActivityResultContracts.StartActivityForResult()))
+    {
+        result ->
+            if(result.resultCode == RESULT_OK &&
+                    result.data != null){
+                val bgImageView = findViewById<ImageView>(R.id.bgImageView)
+                bgImageView.setImageURI(result.data!!.data)
+            }
+    }
+
+    private fun openImageSelectorIntent() {
+        val pickIntent = Intent(
+            Intent.ACTION_PICK,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        )
+
+        openGalleryLauncher.launch(pickIntent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -15,15 +15,15 @@ object Permissions {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
             && shouldShowRequestPermissionRationale(
                 activity,
-                Manifest.permission.CAMERA)
+                Manifest.permission.READ_EXTERNAL_STORAGE)
         ){
             showDeniedDialog(
-                " Permission Demo requires camera access",
-                "Camera cannot be used because Camera access is denied",
+                " Permission Demo requires Storage access",
+                "Storage cannot be used because Storage access is denied",
                 activity,
             )
         } else {
-            cameraResultLauncher.launch(Manifest.permission.CAMERA)
+            cameraResultLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
     }
 
