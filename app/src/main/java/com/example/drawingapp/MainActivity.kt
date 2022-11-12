@@ -3,18 +3,27 @@ package com.example.drawingapp
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.get
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.util.jar.Manifest
 
 class MainActivity : AppCompatActivity() {
     private var drawingView: DrawingView? = null
@@ -32,6 +41,20 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "Permission denied for Storage.", Toast.LENGTH_LONG).show()
             }
+    }
+
+    /// this is a generic function to get any permission
+    /// which permission to ask for will be decided by the String passed to it, in this case is `Manifest.permission.CAMERA`
+    private val writeStorageResultLauncher: ActivityResultLauncher<String>
+            = registerForActivityResult(ActivityResultContracts.RequestPermission())
+    {
+            isGranted ->
+        if (isGranted) {
+            Toast.makeText(this, "Permission granted for WRITE Storage.", Toast.LENGTH_LONG).show()
+            saveImage()
+        } else {
+            Toast.makeText(this, "Permission denied for WRITE Storage.", Toast.LENGTH_LONG).show()
+        }
     }
 
     /// opens an activity and uses its result to set the bgImageView
@@ -70,17 +93,119 @@ class MainActivity : AppCompatActivity() {
         drawingView!!.setBrushColor(currentPaintImageButton!!.tag.toString())
 
         var galleryOpener = findViewById<ImageButton>(R.id.galleryOpener)
-        galleryOpener.setOnClickListener{
-            Permissions.getPermission(this, cameraResultLauncher)
+        galleryOpener.setOnClickListener {
+            if(checkIfReadStorageAllowed()){
+                openImageSelectorIntent()
+            } else {
+                Permissions.getPermissionReadStorage(this, cameraResultLauncher)
+            }
 
             /// only this much code is enough to get permissions
 //            cameraResultLauncher.launch(Manifest.permission.CAMERA)
+        }
+
+        var saveButton = findViewById<ImageButton>(R.id.saveButton)
+        saveButton.setOnClickListener {
+            if(checkIfWriteStorageAllowed()){
+                saveImage()
+            } else {
+                Permissions.getPermissionWriteStorage(this, writeStorageResultLauncher)
+            }
+        }
+
+        var undoButton = findViewById<ImageButton>(R.id.undoButton)
+        undoButton.setOnClickListener{
+            drawingView!!.undoLastDrawPath()
         }
 
         var brushSizeSelector = findViewById<ImageButton>(R.id.brushSizeSelector)
         brushSizeSelector.setOnClickListener{
             openBrushSizeSelector()
         }
+    }
+
+    private fun saveImage() {
+        lifecycleScope.launch{
+            val flDrawingView: FrameLayout = findViewById(R.id.topLayerFrameLayout)
+            //Save the image to the device
+            saveBitmapFileCoroutine(getBitmapFromView(flDrawingView))
+        }
+    }
+
+    private suspend fun saveBitmapFileCoroutine(bitmapFile: Bitmap): String {
+        var result = ""
+
+        withContext(Dispatchers.IO){
+            try {
+                val bytes = ByteArrayOutputStream()
+
+                /// compress the file, and it gets stores in the outputStream => here bytes
+                bitmapFile.compress(Bitmap.CompressFormat.PNG, 90, bytes)
+
+                /// create a file with a unique name
+                val createdFile = File(
+                    externalCacheDir?.absoluteFile.toString()
+                    + File.separator + "DrawingAPP_" + System.currentTimeMillis() / 1000 + ".png"
+                )
+
+                val fileOutputStream = FileOutputStream(createdFile)
+                fileOutputStream.write(bytes.toByteArray())
+                fileOutputStream.close()
+
+                result = createdFile.absolutePath
+
+                /// then show success or failure msg on UI thread
+                runOnUiThread{
+                    if(!result.isEmpty()){
+                        showToast("File saved successfully :$result")
+                    } else {
+                        showToast("Something went wrong while saving the file")
+                    }
+                }
+            } catch (e: Exception) {
+                result = ""
+                e.printStackTrace()
+            }
+        }
+
+        return result
+    }
+
+    private fun getBitmapFromView(view: View): Bitmap {
+        val returnedBitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+
+        /// we first create an empty canvas with width and height of the view
+        val canvas = Canvas(returnedBitmap)
+
+        /// we then take the background image selected
+        val bgDrawable = view.background
+
+        if(bgDrawable != null){
+            /// if we have an image selected then we draw it
+            bgDrawable.draw(canvas)
+        } else {
+            /// if we dont have an image selected then we draw white color on it
+            canvas.drawColor(Color.WHITE)
+        }
+
+        /// we then draw the view on the canvas
+        view.draw(canvas)
+
+        return returnedBitmap
+    }
+
+
+
+    private fun checkIfReadStorageAllowed(): Boolean{
+        val result = ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE)
+
+        return result == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkIfWriteStorageAllowed(): Boolean{
+        val result = ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+        return result == PackageManager.PERMISSION_GRANTED
     }
 
     fun paintColorChanged(view: View){
@@ -124,5 +249,13 @@ class MainActivity : AppCompatActivity() {
             drawingView!!.setBrushSize(30.toFloat())
             brushSizeDialog.dismiss()
         }
+    }
+
+    private fun showToast(msg: String) {
+        Toast.makeText(
+            this@MainActivity,
+            msg,
+            Toast.LENGTH_SHORT
+        ).show()
     }
 }

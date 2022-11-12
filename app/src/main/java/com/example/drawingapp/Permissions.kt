@@ -9,7 +9,7 @@ import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 
 object Permissions {
 
-    fun getPermission(activity: Activity, cameraResultLauncher: ActivityResultLauncher<String>) {
+    fun getPermissionReadStorage(activity: Activity, cameraResultLauncher: ActivityResultLauncher<String>) {
         /// shouldShowRequestPermissionRationale => this checks if Whether you should show permission rationale UI
         /// this will return true if we should not show permission dialog
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
@@ -24,6 +24,24 @@ object Permissions {
             )
         } else {
             cameraResultLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+    }
+
+    fun getPermissionWriteStorage(activity: Activity, cameraResultLauncher: ActivityResultLauncher<String>) {
+        /// shouldShowRequestPermissionRationale => this checks if Whether you should show permission rationale UI
+        /// this will return true if we should not show permission dialog
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+            && shouldShowRequestPermissionRationale(
+                activity,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        ){
+            showDeniedDialog(
+                " Permission Demo requires write to Storage access",
+                "Storage cannot be used because Storage access is denied",
+                activity,
+            )
+        } else {
+            cameraResultLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
     }
 

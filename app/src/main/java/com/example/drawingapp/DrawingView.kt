@@ -145,6 +145,13 @@ class DrawingView(context: Context, attrs: AttributeSet): View(context, attrs) {
         return true
     }
 
+    fun undoLastDrawPath() {
+        if(allPaths.isNotEmpty()){
+            allPaths.removeLast()
+            invalidate()
+        }
+    }
+
     /// this function will help us set the brush size, with respect to the screen size/dimension
     fun setBrushSize(newSize: Float) {
         /// TypedValue.applyDimension will convert the newSize to a floating point value
